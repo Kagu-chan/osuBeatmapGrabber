@@ -57,8 +57,8 @@ namespace Osu_Beatmap_Grabber
             config.AutoUpdate = true;
             config.CurrentVersion = "0";
             config.Domain = new Uri("http://sources.kagu-chan.de");
-            config.Project = "osuSongGrabber_rs1";
-            config.ProtectedDirectories = new string[] { "conf" };
+            config.Project = "osuSongGrabber_rs2";
+            config.ProtectedDirectories = new string[] { "conf", "OsuSongs" };
             config.UpdateDirectory = System.IO.Path.Combine(_appPath, "update");
 
             string updateConfig = System.IO.Path.Combine(_appPath, "_kcConfig.json");
@@ -104,7 +104,10 @@ namespace Osu_Beatmap_Grabber
             if (!_updater.Updating)
             {
                 SetText("Start application...");
-                System.Diagnostics.Process proc = System.Diagnostics.Process.Start(System.IO.Path.Combine(_appPath, "App.exe"));
+
+                System.IO.Directory.SetCurrentDirectory(_appPath);
+                System.Diagnostics.Process proc = System.Diagnostics.Process.Start("App.exe");
+                
                 Application.Exit();
             }
         }

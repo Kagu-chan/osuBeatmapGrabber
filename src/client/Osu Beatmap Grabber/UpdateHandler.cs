@@ -143,6 +143,7 @@ namespace Osu_Beatmap_Grabber
 
         public override bool RehashUpdate(Configuration configuration, string configName)
         {
+            DisplayMessage(HandlerMessageSeverity.Important, "Copy files");
             foreach (string item in Directory.GetFiles(TargetDirectory))
             {
                 if (item.Equals(configName)) continue;
@@ -165,10 +166,14 @@ namespace Osu_Beatmap_Grabber
                 catch (Exception) { }
             }
 
-            string[] files = Directory.GetFiles(UpdateDirectory);
+            string[] files = Directory.GetFiles(UpdateDirectory, "*", SearchOption.AllDirectories);
             foreach (var item in files)
             {
-                string newPath = Path.Combine(TargetDirectory, Path.GetFileName(item));
+                string pathPartial = item.Replace(UpdateDirectory, "").TrimStart(new[] {'/', '\\'});
+                string newPath = Path.Combine(TargetDirectory, pathPartial);
+                string filePath = Path.GetDirectoryName(newPath);
+                if (!Directory.Exists(filePath)) Directory.CreateDirectory(filePath);
+                
                 try
                 {
                     File.Copy(item, newPath);

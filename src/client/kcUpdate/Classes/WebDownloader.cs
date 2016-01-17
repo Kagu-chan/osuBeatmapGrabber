@@ -45,7 +45,7 @@ namespace kcUpdater.Classes
             while (Downloading) { } //NOP - wait for current download to finnish
 
             string dir = Path.GetDirectoryName(target);
-            while (!Directory.Exists(dir)) { }
+            while (!Directory.Exists(dir)) { Directory.CreateDirectory(dir); }
 
             Downloading = true;
 
