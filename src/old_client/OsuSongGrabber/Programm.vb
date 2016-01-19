@@ -5,6 +5,7 @@ Option Strict On
 Imports System.Drawing
 Imports System.IO
 Imports System.IO.Path
+Imports System.Security.AccessControl
 Imports System.Text.RegularExpressions
 
 Imports TagLib
@@ -20,9 +21,14 @@ Module Programm
     Private _registryKey As String = "HKEY_CLASSES_ROOT\osu!\shell\open\command"
 
     ''' <summary>
+    ''' If the key above does not work (osu bug?) try this one
+    ''' </summary>
+    Private _fallbackRegistryKey As String = "HKEY_CLASSES_ROOT\osu\DefaultIcon"
+
+    ''' <summary>
     ''' The target directory where the songs will be saved
     ''' </summary>
-    Private _copyToFolger As String = "OsuSongs"
+    Private _copyToFolger As String = String.Empty
 
     ''' <summary>
     ''' The album name which will tagged to all songs
@@ -46,7 +52,8 @@ Module Programm
     ''' <returns></returns>
     Public ReadOnly Property SongsPath As String
         Get
-            Return Path(UserPreferences("BeatmapDirectory"))
+            Dim sPath As String = Path(UserPreferences("BeatmapDirectory"))
+            Return If(Directory.Exists(sPath), sPath, UserEnterPath("songs"))
         End Get
     End Property
 
@@ -56,6 +63,16 @@ Module Programm
     ''' <remarks></remarks>
     Public Sub LoadUserPreferences()
         Dim fileName As String = Path(GetConfigName())
+
+        If Not IO.File.Exists(fileName) Then
+            Console.WriteLine("Please Enter the path of your osu! configuration path")
+            fileName = Console.ReadLine()
+
+            If Not IO.File.Exists(fileName) Then
+                LoadUserPreferences()
+                Return
+            End If
+        End If
 
         Dim lines As IEnumerable(Of String) = IO.File.ReadAllLines(fileName)
         Dim findPattern As New Regex("^@?(\w+)\s?=\s?(.+)$", RegexOptions.IgnoreCase)
@@ -82,17 +99,23 @@ Module Programm
     ''' </summary>
     ''' <returns>osu! storage path</returns>
     Private Function GetOsuStoragePath() As String
-        Dim osuStartCommand As String = CStr(My.Computer.Registry.GetValue(_registryKey, "", Nothing))
-        Dim path As String = osuStartCommand.Substring(1, osuStartCommand.IndexOf("osu!.exe") - 1)
-
-        Return If(Directory.Exists(path), path, UserEnterPath())
+        Return GetOsuStoragePath(_registryKey, True)
     End Function
 
-    Private Function UserEnterPath() As String
-        Console.WriteLine("Cannot determine osu storage path - please enter it below")
+    Private Function GetOsuStoragePath(key As String, chain As Boolean) As String
+        Dim osuStartCommand As String = CStr(My.Computer.Registry.GetValue(key, "", Nothing))
+        If String.IsNullOrEmpty(osuStartCommand) Then Return If(chain, GetOsuStoragePath(_fallbackRegistryKey, False), UserEnterPath("storage"))
+
+        Dim path As String = osuStartCommand.Substring(1, osuStartCommand.IndexOf("osu!.exe") - 1)
+
+        Return If(Directory.Exists(path), path, If(chain, GetOsuStoragePath(_fallbackRegistryKey, False), UserEnterPath("storage")))
+    End Function
+
+    Private Function UserEnterPath(key As String) As String
+        Console.WriteLine(String.Format("Cannot determine osu {0} path - please enter it below", key))
         Dim newPath As String = Console.ReadLine()
 
-        Return If(Directory.Exists(newPath), newPath, UserEnterPath())
+        Return If(Directory.Exists(newPath), newPath, UserEnterPath(key))
     End Function
 
     ''' <summary>
@@ -105,10 +128,6 @@ Module Programm
     End Function
 
     Sub Main()
-        _osuStoragePath = GetOsuStoragePath()
-
-        LoadUserPreferences()
-
         Console.WriteLine("Cleanup directory...")
         Threading.Thread.Sleep(3000)
 
@@ -123,6 +142,21 @@ Module Programm
                 End Try
             End If
         Next
+
+        _osuStoragePath = GetOsuStoragePath()
+        LoadUserPreferences()
+
+        Console.WriteLine("Please enter the path where beatmaps should be stored - leave blank for default ""OsuSongs"" in your music library")
+        _copyToFolger = Console.ReadLine
+        If String.IsNullOrEmpty(_copyToFolger) Then _copyToFolger = Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), "OsuSongs")
+
+        If Not Directory.Exists(_copyToFolger) Then Directory.CreateDirectory(_copyToFolger)
+
+        Dim dInfo As New DirectoryInfo(_copyToFolger)
+        Dim dSecurity As DirectorySecurity = dInfo.GetAccessControl()
+
+        dSecurity.AddAccessRule(New FileSystemAccessRule(Environment.UserDomainName() & "\" & Environment.UserName(), FileSystemRights.Modify, AccessControlType.Allow))
+        dInfo.SetAccessControl(dSecurity)
 
         Console.WriteLine()
         Console.WriteLine("Create beatmap list...")
@@ -261,8 +295,6 @@ Module Programm
     Private Function GrabSongs(list As Dictionary(Of String, String())) As UInteger
         Console.Title = "Copy Songs..."
         Dim tmpPath As String = Combine(My.Computer.FileSystem.SpecialDirectories.Temp, Guid.NewGuid.ToString & ".jpg")
-
-        If Not IO.Directory.Exists(_copyToFolger) Then IO.Directory.CreateDirectory(_copyToFolger)
 
         For Each foundFile As String In My.Computer.FileSystem.GetFiles(_copyToFolger)
             My.Computer.FileSystem.DeleteFile(foundFile)
