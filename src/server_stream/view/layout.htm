@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="{{@HTMLLANG}}">
+<head>
+	<meta charset="utf-8">
+	<meta name="generator" content="{{@PACKAGE}} @kcSoft">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="INDEX,FOLLOW">
+	<meta name="format-detection" content="telephone=no">
+	<meta name="keywords" content="{{ implode(', ', @KEYWORDS) }}">
+	<meta name="description" content="{{@SITEDESCRIPTION}}">
+	<meta name="version" content="{{@PACKAGEVERSION}}">
+	<meta name="abstract" content="{{@ABSTRACT}}">
+	<meta name="author" content="{{@AUTHOR}}">
+	<meta name="date" content="{{@DATE}}" />
+	<meta name="copyright" content="{{@AUTHOR}}" />
+	<meta name="language" content="{{ is_array(@LANGAVAILABLE) ? implode(', ', @LANGAVAILABLE) : @LANGAVAILABLE }}" />
+	<meta http-equiv="imagetoolbar" content="no">
+	<meta http-equiv="X-UA-Compatible" content="IE=EDGE">
+	
+	<base href="{{@BASEPATH}}">
+
+	<repeat group="{{ @INCLUDECSS }}" key="{{ @cssFile }}" value="{{ @cssMedia }}">
+	<link rel="stylesheet" type="text/css" href="{{@UI . 'css/' . @cssFile}}.css?{{microtime(true)}}" media="{{@cssMedia}}">
+	</repeat>
+
+	<title>{{@CURRENTTITLE}} | {{@PACKAGETITLE}}</title>
+
+	<link rel="shortcut icon" href="{{@UI . 'image/' . @SHORTCUTICON}}.ico">
+	<link rel="apple-touch-icon" href="{{@UI . 'image/' . @SHORTCUTICONAPPLE}}.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="{{@UI . 'image/' . @SHORTCUTICONAPPLE}}_compressed.png"/>
+</head>
+<body>
+	<div class="container">
+		<include href="{{ @CONTENT }}" />
+	</div>
+	<repeat group="{{ @INCLUDEJS }}" value="{{ @jsFile }}">
+	<script src="{{@UI . 'js/' . @jsFile}}.js?{{microtime(true)}}" type="text/javascript"></script>
+	</repeat>
+	<!--[if lte IE 8]>
+        <include href="{{@IE8JS}}" />
+    <![endif]-->
+</body>
+</html>

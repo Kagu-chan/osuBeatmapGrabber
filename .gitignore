@@ -234,7 +234,7 @@ _Pvt_Extensions
 
 # Ignore some web files
 *db.cfg
-*/__lib
-*/__ui
+__lib/
+__ui/
 temp/
 logs/

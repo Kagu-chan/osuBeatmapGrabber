@@ -1,0 +1,6 @@
+[globals]
+dbhost=localhost
+dvport=3306
+dbuser=root
+dbpass=
+dbname=kcStream
