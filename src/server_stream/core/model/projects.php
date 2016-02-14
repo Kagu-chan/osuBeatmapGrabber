@@ -5,7 +5,7 @@
 		/**
 		 * @inheritdoc
 		 */
-		class Project extends \ActiveRecord {
+		class Projects extends \ActiveRecord {
 
 			/**
 			 * @inheritdoc

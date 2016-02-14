@@ -7,10 +7,19 @@
 	global $db;
 	$db = $f3->get("DB");
 
+	function execute($query)
+	{
+		global $db;
+
+		$db->begin();
+                $db->exec($query);
+                $db->commit();
+	}
+
 	function scaffold($name, $columns)
 	{
 		global $db;
-		
+
 		$lines = [];
 		foreach ($columns as $cName => $define)
 		{

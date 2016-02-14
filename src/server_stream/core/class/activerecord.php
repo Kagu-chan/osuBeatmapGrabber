@@ -89,7 +89,24 @@
 		public static function all($json=false)
 		{
 			$result = self::getDBInstance()->select("*", array('DELETED=?', 0));
-			\App::log(\App::SEVERITY_TRACE, "Loaded all (" . count($result) . ") datasets from table [convert to json is set to " . ($json ? "TRUE]" : "FALSE]"));
+			\App::log(\App::SEVERITY_TRACE, "Loaded all (" . count($result) . " result[s]) datasets from table [convert to json is set to " . ($json ? "TRUE]" : "FALSE]"));
+
+			return $json ? self::getJson($result) : $result;
+		}
+
+		/**
+		 * Load a single record by given field from database
+		 *
+		 * @param string $field the field name to compare with
+		 * @param mixed the value the filed should have
+		 * @param bool $json=false If true, then the result contains an array with filtered object arrays
+		 * @return array<DB\SQL\Mapper> | array<array> List of arrays or list of objects
+		 * @see refer<ActiveRecord::getJson>
+		 */
+		public static function by($field, $value, $json=false)
+		{
+			$result = self::getDBInstance()->select("*", array(strtoupper($field) . '=? AND DELETED=?', $value, 0));
+			\App::log(\App::SEVERITY_TRACE, "Loaded by $field [$value] (" . count($result) . " result[s]) from table [convert to json is set to " . ($json ? "TRUE]" : "FALSE]"));
 
 			return $json ? self::getJson($result) : $result;
 		}

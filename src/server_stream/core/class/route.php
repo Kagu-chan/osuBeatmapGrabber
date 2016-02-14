@@ -17,8 +17,9 @@
 		 * Per default it sets JSON to true
 		 */
 		public function listing() {
-			#\App::set("JSON", TRUE);
+			\App::set("JSON", TRUE);
 			\App::set("ACTION", "list");
+			\Helper\Routing::instance()->generateListingResult();
 		}
 
 		/**
@@ -28,10 +29,33 @@
 		 */
 		public function index() { /* NOP */ }
 
-		public function get() {}
-	    public function post() {}
-	    public function put() {}
-	    public function delete() {}
+		/**
+		 * REST GET
+		 */
+		public function get() {
+			\App::set("ACTION", "show");
+			\Helper\Routing::instance()->generateShowResult();
+		}
+
+	    public function post() {
+	    	\App::set("ACTION", "show");
+	    }
+
+	    public function put() {
+	    	\App::set("ACTION", "show");
+	    }
+
+	    public function patch() {
+	    	\App::set("ACTION", "show");
+	    }
+
+	    public function delete() {
+	    	\App::set("ACTION", "list");
+	    }
+	    
+	    public function head() {
+	    	\App::set("ACTION", "show");
+	    }
 
 	    /**
 	     * before route action

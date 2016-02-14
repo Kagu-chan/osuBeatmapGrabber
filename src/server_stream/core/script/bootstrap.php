@@ -17,9 +17,25 @@
 	//! Load the main configuration of the web service like app assets or routing configuration
 	App::f3()->config('./conf/globals.cfg');
 	App::f3()->config('./conf/routes.cfg');
-	App::f3()->config('./conf/maps.cfg');
+	App::f3()->config('./conf/kcmaps.cfg');
 	App::f3()->config('./conf/redirects.cfg');
 	App::f3()->config('./conf/db.cfg');
+
+	foreach (App::get("kcmaps") as $verb => $class)
+	{
+		App::f3()->route("GET $verb [sync]", $class . "->get");
+		App::f3()->route("POST $verb [sync]", $class . "->post");
+		App::f3()->route("PUT $verb [sync]", $class . "->put");
+		App::f3()->route("PATCH $verb [sync]", $class . "->patch");
+		App::f3()->route("DELETE $verb [sync]", $class . "->delete");
+		App::f3()->route("HEAD $verb [sync]", $class . "->head");
+		App::f3()->route("GET $verb [ajax]", $class . "->get");
+		App::f3()->route("POST $verb [ajax]", $class . "->post");
+		App::f3()->route("PUT $verb [ajax]", $class . "->put");
+		App::f3()->route("PATCH $verb [ajax]", $class . "->patch");
+		App::f3()->route("DELETE $verb [ajax]", $class . "->delete");
+		App::f3()->route("HEAD $verb [ajax]", $class . "->head");
+	}
 
 	//! Define the app as configured
 	App::$configured = TRUE;
