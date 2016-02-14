@@ -17,7 +17,7 @@
 		 * Per default it sets JSON to true
 		 */
 		public function listing() {
-			#\App::set("JSON", TRUE);
+			\App::set("JSON", TRUE);
 			\App::set("ACTION", "list");
 		}
 

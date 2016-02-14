@@ -1,7 +1,7 @@
 RewriteEngine On
 #RewriteBase /
 
-RewriteRule ^(tmp)\/|\.ini|\.cfg$ - [R=404]
+RewriteRule ^(temp)\/|(logs)\/|\.ini|\.cfg$ - [R=404]
 
 RewriteCond %{REQUEST_FILENAME} !-l
 RewriteCond %{REQUEST_FILENAME} !-f
