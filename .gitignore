@@ -231,3 +231,10 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
+
+# Ignore some web files
+*db.cfg
+*/__lib
+*/__ui
+temp/
+logs/
