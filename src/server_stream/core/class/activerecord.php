@@ -75,7 +75,7 @@
 			$table = self::table();
 			\App::log(\App::SEVERITY_TRACE, "Retrive database mapper for `$table`");
 
-			$instance = new \DB\SQL\Mapper(\App::get("DB"), $table);
+			$instance = new \DB\SQL\Mapper(\App::get("DB"), $table, \App::get("DBCACHE"));
 			return $instance;
 		}
 

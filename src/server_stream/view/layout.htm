@@ -19,8 +19,8 @@
 	
 	<base href="{{@BASEPATH}}">
 
-	<repeat group="{{ @INCLUDECSS }}" key="{{ @cssFile }}" value="{{ @cssMedia }}">
-	<link rel="stylesheet" type="text/css" href="{{@UI . 'css/' . @cssFile}}.css?{{microtime(true)}}" media="{{@cssMedia}}">
+	<repeat group="{{ @INCLUDECSS }}" key="{{ @cssMedia }}" value="{{ @cssFiles }}">
+	<link rel="stylesheet" type="text/css" href="minify/css?files={{ @cssFiles }}" media="{{@cssMedia}}">
 	</repeat>
 
 	<title>{{@CURRENTTITLE}} | {{@PACKAGETITLE}}</title>
@@ -33,9 +33,7 @@
 	<div class="container">
 		<include href="{{ @CONTENT }}" />
 	</div>
-	<repeat group="{{ @INCLUDEJS }}" value="{{ @jsFile }}">
-	<script src="{{@UI . 'js/' . @jsFile}}.js?{{microtime(true)}}" type="text/javascript"></script>
-	</repeat>
+	<script src="minify/js?files={{ @INCLUDEJS }}" type="text/javascript"></script>
 	<!--[if lte IE 8]>
 		<include href="{{@IE8JS}}" />
 	<![endif]-->

@@ -37,6 +37,27 @@
 	if (!is_array(App::get("INCLUDEJS"))) App::set("INCLUDEJS", [App::get("INCLUDEJS")]);
 	if (!is_array(App::get("INCLUDECSS"))) App::set("INCLUDECSS", [App::get("INCLUDECSS") => "all"]);
 
+	//! Prepare the compression for CSS files
+	$css = [];
+	foreach (App::get("INCLUDECSS") as $file => $media)
+	{
+		if (!isset($css[$media])) $css[$media] = [];
+		$css[$media][] = "$file.css";
+	}
+	foreach ($css as $key => &$value) $value = implode(",", $value);
+	
+	App::set("INCLUDEJS", implode(".js,", App::get("INCLUDEJS")) . ".js");
+
+	App::set("INCLUDECSS", $css);
+	App::f3()->route('GET /minify/@type',
+		function($f3, $args) {
+			$path = $f3->get('UI') . $args['type'] . '/';
+			$files = str_replace('../', '', filter_input(INPUT_GET, "files"));
+			echo Web::instance()->minify($files, null, true, $path);
+		},
+		App::get("STYLECACHE")
+	);
+
 	/** 
 	 * Decide the HTML client language
 	 *
