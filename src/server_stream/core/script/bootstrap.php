@@ -22,15 +22,15 @@
 	App::f3()->config('./conf/db.cfg');
 	App::f3()->config('./conf/ips.cfg');
 
-	//! Autogenerate Scaffold Files
-	Scaffold::instance()->execute("./conf/scaffold.cfg");
-
 	//! Configure ReST Routing Objects
 	App::configureRest();
 
 	//! Define the app as configured
 	App::$configured = TRUE;
 	App::log(App::SEVERITY_TRACE, "Configured App via configuration files");
+
+	//! Autogenerate Scaffold Files
+	Scaffold::instance()->execute("./conf/scaffold.cfg");
 
 	//! Instanciate the database connection
 	App::set('DB', new DB\SQL(
