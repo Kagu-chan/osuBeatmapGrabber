@@ -20,22 +20,13 @@
 	App::f3()->config('./conf/rest.cfg');
 	App::f3()->config('./conf/redirects.cfg');
 	App::f3()->config('./conf/db.cfg');
+	App::f3()->config('./conf/ips.cfg');
 
-	foreach (App::get("rest") as $verb => $class)
-	{
-		App::f3()->route("GET $verb [sync]", $class . "->get");
-		App::f3()->route("POST $verb [sync]", $class . "->post");
-		App::f3()->route("PUT $verb [sync]", $class . "->put");
-		App::f3()->route("PATCH $verb [sync]", $class . "->patch");
-		App::f3()->route("DELETE $verb [sync]", $class . "->delete");
-		App::f3()->route("HEAD $verb [sync]", $class . "->head");
-		App::f3()->route("GET $verb [ajax]", $class . "->get");
-		App::f3()->route("POST $verb [ajax]", $class . "->post");
-		App::f3()->route("PUT $verb [ajax]", $class . "->put");
-		App::f3()->route("PATCH $verb [ajax]", $class . "->patch");
-		App::f3()->route("DELETE $verb [ajax]", $class . "->delete");
-		App::f3()->route("HEAD $verb [ajax]", $class . "->head");
-	}
+	//! Autogenerate Scaffold Files
+	Scaffold::instance()->execute("./conf/scaffold.cfg");
+
+	//! Configure ReST Routing Objects
+	App::configureRest();
 
 	//! Define the app as configured
 	App::$configured = TRUE;
@@ -49,9 +40,10 @@
 	));
 	App::log(App::SEVERITY_TRACE, "Connected to database at host " . App::get("dbhost"));
 
-	//! Convert CSS and JS assets into array if they are not present as array
+	//! Convert array required properties to array if they are not present as array
 	if (!is_array(App::get("INCLUDEJS"))) App::set("INCLUDEJS", [App::get("INCLUDEJS")]);
 	if (!is_array(App::get("INCLUDECSS"))) App::set("INCLUDECSS", [App::get("INCLUDECSS") => "all"]);
+	if (!is_array(App::get("ipaccess.allowedips"))) App::set("ipaccess.allowedips", [App::get("ipaccess.allowedips")]);
 
 	//! Prepare the compression for CSS files
 	$css = [];
@@ -67,6 +59,7 @@
 	App::set("INCLUDECSS", $css);
 	App::f3()->route('GET /minify/@type',
 		function($f3, $args) {
+			App::log(App::SEVERITY_TRACE, "Serve minified files [" . $args['type'] . "](" . filter_input(INPUT_GET, "files") . ")");
 			$path = $f3->get('UI') . $args['type'] . '/';
 			$files = str_replace('../', '', filter_input(INPUT_GET, "files"));
 			echo Web::instance()->minify($files, null, true, $path);

@@ -88,6 +88,32 @@
 			return $this->_f3;
 		}
 
+		//! Configure the mapping routes for REST requests
+		public static function configureRest()
+		{
+			foreach (self::get("rest") as $verb => $class)
+			{
+				self::f3()->route("GET $verb [sync]", $class . "->get");
+				self::f3()->route("POST $verb [sync]", $class . "->post");
+				self::f3()->route("PUT $verb [sync]", $class . "->put");
+				self::f3()->route("PATCH $verb [sync]", $class . "->patch");
+				self::f3()->route("DELETE $verb [sync]", $class . "->delete");
+				self::f3()->route("HEAD $verb [sync]", $class . "->head");
+				self::f3()->route("GET $verb [ajax]", $class . "->get");
+				self::f3()->route("POST $verb [ajax]", $class . "->post");
+				self::f3()->route("PUT $verb [ajax]", $class . "->put");
+				self::f3()->route("PATCH $verb [ajax]", $class . "->patch");
+				self::f3()->route("DELETE $verb [ajax]", $class . "->delete");
+				self::f3()->route("HEAD $verb [ajax]", $class . "->head");
+			}
+		}
+
+		//! Check if users IP address is one of the allowed in the ipaccess configuration, otherwise die with forbidden
+		public static function checkAccessOrDie()
+		{
+			if (!in_array(self::get("IP"), self::get("ipaccess.allowedips"))) self::f3()->error(403);
+		}
+
 		/**
 		 * Logs a message to the configured log file
 		 * 
