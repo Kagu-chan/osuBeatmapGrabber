@@ -96,11 +96,13 @@ namespace kcUpdater.Handler
             foreach (KeyValuePair<string, string> item in _lastResponse.Files)
             {
                 Uri source = configuration.Path(Enums.PathType.File, _lastResponse.Version, item.Key);
-                Classes.WebDownloader.Instance.DownloadFile(source, Path.Combine(configuration.UpdateDirectory, item.Value));
+                Classes.WebDownloader.Instance.AddDownloadFile(source, Path.Combine(configuration.UpdateDirectory, item.Value));
             }
-            
-            Console.WriteLine(_lastResponse.Files.Count + " files insgesamt, aktuell bei " + Classes.WebDownloader.Instance.FileNumber);
-            while (_lastResponse.Files.Count != Classes.WebDownloader.Instance.FileNumber && Classes.WebDownloader.Instance.Downloading) { }
+            Classes.WebDownloader.Instance.DownloadQueue();
+
+            while (Classes.WebDownloader.downloadQueue.Count != 0) { 
+                //NOP - Wait for download complete!
+            }
             return true;
         }
 

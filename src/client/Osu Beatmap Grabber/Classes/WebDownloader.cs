@@ -16,6 +16,7 @@ namespace kcUpdater.Classes
         /// Returns the Instance of this class
         /// </summary>
         public static WebDownloader Instance { get { return lazy.Value; } }
+        public static Dictionary<Uri, string> downloadQueue;
 
         public bool Downloading;
         public int FileNumber = 0;
@@ -38,12 +39,24 @@ namespace kcUpdater.Classes
         private WebDownloader()
         {
             Downloading = false;
+            downloadQueue = new Dictionary<Uri, string>();
+        }
+
+        public void AddDownloadFile(Uri source, string target)
+        {
+            downloadQueue.Add(source, target);
+        }
+
+        public void DownloadQueue() 
+        {
+            if (downloadQueue.Count == 0) return;
+            KeyValuePair<Uri, string> current = downloadQueue.First();
+            DownloadFile(current.Key, current.Value);
         }
 
         public void DownloadFile(Uri source, string target)
         {
-            while (Downloading) { } //NOP - wait for current download to finnish
-
+            //while (Downloading) { } //NOP - wait for current download to finnish
             string dir = Path.GetDirectoryName(target);
             while (!Directory.Exists(dir)) { Directory.CreateDirectory(dir); }
 
@@ -93,6 +106,9 @@ namespace kcUpdater.Classes
                 _fileStream.Dispose();
                 if (EndDownload != null) EndDownload.Invoke();
                 Downloading = false;
+
+                downloadQueue.Remove(downloadQueue.First().Key);
+                DownloadQueue();
             }
         }
 
