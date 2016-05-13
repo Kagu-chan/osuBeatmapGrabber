@@ -53,6 +53,14 @@ Module Programm
     Public UserPreferences As New Dictionary(Of String, String)
 
     ''' <summary>
+    ''' List of all invalid characters
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public InvalidCharacters As List(Of Char)
+
+    Public Reg As New Regex("(tv|short|cut)([\s-\.]*)(ver|size|edit).*", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+
+    ''' <summary>
     ''' osu! songs path depending on user preferences or default path
     ''' </summary>
     ''' <returns></returns>
@@ -159,6 +167,9 @@ Module Programm
         Console.WriteLine("If you want to save album information to files? If not, enter 'No'")
         _avoidAlbumName = Console.ReadLine.ToLower.Equals("no")
         If _avoidAlbumName Then _albumName = Nothing
+
+        InvalidCharacters = New List(Of Char)(IO.Path.GetInvalidFileNameChars)
+        InvalidCharacters.AddRange({"("c, ")"c, "."c, "~"c, "["c, "]"c})
 
         If Not Directory.Exists(_copyToFolger) Then Directory.CreateDirectory(_copyToFolger)
 
@@ -269,7 +280,9 @@ Module Programm
                 data(1).Trim(),
                 data(2).Trim()
             )
-            If songsList.ContainsKey(fullName.ToLower) Then Continue For
+            If songsList.ContainsKey(fullName.ToLower) Then Continue For ' alredy found
+            If fullName.ToLower.EndsWith("[short ver]") AndAlso songsList.ContainsKey(fullName.ToLower.Replace(" [short ver]", "")) Then Continue For ' its a short ver but contains a non short ver
+            If Not fullName.ToLower.EndsWith("[short ver]") AndAlso songsList.ContainsKey(fullName.ToLower & " [short ver]") Then songsList.Remove(fullName.ToLower & " [short ver]") ' its a non short ver - we remove the short one
 
             songsList.Add(fullName.ToLower, {data(0), data(1), data(2), path, imgPath})
 
@@ -299,6 +312,17 @@ Module Programm
 
             i += 1
         Next
+
+        ' remove invalid characters!
+        settings(1) = String.Join("", settings(1).Split(InvalidCharacters.ToArray()))
+        settings(2) = String.Join("", settings(2).Split(InvalidCharacters.ToArray()))
+
+        Dim wStr As String = settings(2)
+        settings(2) = Reg.Replace(settings(2), String.Empty).Trim()
+
+        If Not wStr.Equals(settings(2)) Then
+            settings(2) &= " [Short Ver]"
+        End If
 
         Dim image As Match = (New Regex("^0,0,""([^""]+)"".*", RegexOptions.Multiline Or RegexOptions.IgnoreCase)).Match(content)
         settings(3) = If(image.Success, image.Groups(1).Value, String.Empty)
@@ -346,7 +370,11 @@ Module Programm
             Try
                 IO.File.Copy(originalFile, fileName, True)
             Catch ex As Exception
-                'NOP
+                Console.WriteLine("Skip " & fileName)
+                Console.WriteLine(ex.Message)
+                Console.WriteLine()
+                Threading.Thread.Sleep(1000)
+                Continue For
             End Try
 
             titleNumber += 1UI
@@ -354,24 +382,46 @@ Module Programm
             Try
                 Dim file As TagLib.File = TagLib.File.Create(fileName)
 
-                file.Tag.Album = _albumName
-                file.Tag.AlbumArtists = {_albumName}
-                
-                file.Tag.Performers = {interpret}
-                file.Tag.Title = title
-                file.Tag.Track = titleNumber
-                file.Tag.Pictures = If(IsNothing(img), {}, {img})
+                With file.Tag
+                    ' first clear all data
+                    '@see <http://stackoverflow.com/questions/17292142/taglib-sharp-not-editing-artist>
+
+                    .Album = Nothing
+                    .AlbumArtists = Nothing
+                    .Performers = Nothing
+                    .Title = Nothing
+                    .Track = Nothing
+                    .Pictures = Nothing
+
+                    ' fill in data
+                    If Not _avoidAlbumName Then
+                        .Album = _albumName
+                        .AlbumArtists = {_albumName}
+                    End If
+
+                    .Performers = {interpret}
+                    .Title = title
+                    .Track = titleNumber
+                    .Pictures = If(IsNothing(img), {}, {img})
+                End With
 
                 file.Save()
             Catch ex As Exception
-                'NOP
+                Console.WriteLine("Issue with " & fileName)
+                Console.WriteLine(ex.Message)
+                Console.WriteLine()
+                Threading.Thread.Sleep(1000)
             End Try
 
             Console.WriteLine("Grabbed: " + fileName)
             Console.Title = String.Format("Copy Songs... {0} from {1} songs so far", titleNumber, list.Count)
         Next
 
-        IO.File.Delete(tmpPath)
+        Try
+            IO.File.Delete(tmpPath)
+        Catch ex As Exception
+            ' NOP - its a tmp file!
+        End Try
 
         Return titleNumber
     End Function
