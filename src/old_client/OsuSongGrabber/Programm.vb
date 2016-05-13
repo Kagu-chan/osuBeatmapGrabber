@@ -330,7 +330,9 @@ Module Programm
         Return settings
     End Function
 
-    Private Function GrabSongs(list As Dictionary(Of String, String())) As UInteger
+    Private Function GrabSongs(ByVal list As Dictionary(Of String, String())) As UInteger
+        Dim file As TagLib.File = Nothing
+
         Console.Title = "Copy Songs..."
         Dim tmpPath As String = Combine(My.Computer.FileSystem.SpecialDirectories.Temp, Guid.NewGuid.ToString & ".jpg")
 
@@ -347,9 +349,10 @@ Module Programm
             Dim img As IPicture = Nothing
 
             If Not String.IsNullOrEmpty(pair.Value(4)) AndAlso IO.File.Exists(pair.Value(4)) Then
+                Dim cropped As Image = Nothing
+                Dim image As Bitmap = Nothing
                 Try
-                    Dim image As New Bitmap(pair.Value(4))
-                    Dim cropped As Image = Nothing
+                    image = New Bitmap(pair.Value(4))
                     If image.Width = image.Height Then cropped = image.Clone(New Rectangle(0, 0, image.Width, image.Height), Drawing.Imaging.PixelFormat.DontCare)
                     If image.Width < image.Height Then
                         cropped = image.Clone(New Rectangle(0, CInt((image.Height - image.Width) / 2), image.Width, image.Width), Drawing.Imaging.PixelFormat.DontCare)
@@ -362,6 +365,9 @@ Module Programm
                     img = New Picture(tmpPath)
                 Catch ex As Exception
                     img = Nothing
+                Finally
+                    If Not IsNothing(cropped) Then cropped.Dispose()
+                    If Not IsNothing(image) Then image.Dispose()
                 End Try
             End If
 
@@ -380,7 +386,7 @@ Module Programm
             titleNumber += 1UI
 
             Try
-                Dim file As TagLib.File = TagLib.File.Create(fileName)
+                file = TagLib.File.Create(fileName)
 
                 With file.Tag
                     ' first clear all data
@@ -411,6 +417,8 @@ Module Programm
                 Console.WriteLine(ex.Message)
                 Console.WriteLine()
                 Threading.Thread.Sleep(1000)
+            Finally
+                If Not IsNothing(file) Then file.Dispose()
             End Try
 
             Console.WriteLine("Grabbed: " + fileName)
