@@ -41,6 +41,12 @@ Module Programm
     Private _osuStoragePath As String = String.Empty
 
     ''' <summary>
+    ''' If true, no album data will get saved to song files
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private _avoidAlbumName As Boolean = False
+
+    ''' <summary>
     ''' Users preferences. <seealso cref="LoadUserPreferences">Before use please load user preferences</seealso>.
     ''' </summary>
     ''' <remarks></remarks>
@@ -150,6 +156,10 @@ Module Programm
         _copyToFolger = Console.ReadLine
         If String.IsNullOrEmpty(_copyToFolger) Then _copyToFolger = Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), "OsuSongs")
 
+        Console.WriteLine("If you want to save album information to files? If not, enter 'No'")
+        _avoidAlbumName = Console.ReadLine.ToLower.Equals("no")
+        If _avoidAlbumName Then _albumName = Nothing
+
         If Not Directory.Exists(_copyToFolger) Then Directory.CreateDirectory(_copyToFolger)
 
         Dim dInfo As New DirectoryInfo(_copyToFolger)
@@ -157,6 +167,10 @@ Module Programm
 
         dSecurity.AddAccessRule(New FileSystemAccessRule(Environment.UserDomainName() & "\" & Environment.UserName(), FileSystemRights.Modify, AccessControlType.Allow))
         dInfo.SetAccessControl(dSecurity)
+
+        Console.WriteLine()
+        Console.WriteLine("This release is only to fix some issues. Currently we're rewriting the complete tool and updater.")
+        Threading.Thread.Sleep(3000)
 
         Console.WriteLine()
         Console.WriteLine("Create beatmap list...")
@@ -242,7 +256,7 @@ Module Programm
         Dim songsList As New Dictionary(Of String, String())
 
         For Each file As String In beatmapList
-            Dim data As String() = GetRelevantData(file)
+            Dim data As IEnumerable(Of String) = GetRelevantData(file)
             If data.Count() < 1 Then
                 Continue For
             End If
@@ -260,18 +274,18 @@ Module Programm
             songsList.Add(fullName.ToLower, {data(0), data(1), data(2), path, imgPath})
 
             Console.WriteLine("Filtered: " & fullName)
-            Console.Title = String.Format("Filter Beatmaps... {0} beatmaps now", songsList.Keys.Count)
+            Console.Title = String.Format("Filter Beatmaps... filtered from {0} to {1} beatmaps now", beatmapList.Count, songsList.Keys.Count)
         Next
 
         Return songsList
     End Function
 
-    Private Function GetRelevantData(file As String) As String()
+    Private Function GetRelevantData(ByVal file As String) As IEnumerable(Of String)
         Dim content As String
         Try
             content = IO.File.ReadAllText(file)
         Catch ex As PathTooLongException
-            Return {}
+            Return New List(Of String)()
         End Try
 
         Dim settings As String() = {"AudioFilename", "Artist", "Title", String.Empty}
@@ -339,7 +353,10 @@ Module Programm
 
             Try
                 Dim file As TagLib.File = TagLib.File.Create(fileName)
+
                 file.Tag.Album = _albumName
+                file.Tag.AlbumArtists = {_albumName}
+                
                 file.Tag.Performers = {interpret}
                 file.Tag.Title = title
                 file.Tag.Track = titleNumber
@@ -351,7 +368,7 @@ Module Programm
             End Try
 
             Console.WriteLine("Grabbed: " + fileName)
-            Console.Title = String.Format("Copy Songs... {0} songs so far", titleNumber)
+            Console.Title = String.Format("Copy Songs... {0} from {1} songs so far", titleNumber, list.Count)
         Next
 
         IO.File.Delete(tmpPath)
